@@ -137,7 +137,7 @@ Install deps we're going to need during the building process
 ```
 apt install build-essential gfortran libglib2.0-dev-bin python3-pip python-dev python-numpy python-cython python3-dev python3-numpy python3-cython libtiff-dev zlib1g-dev libjpeg-dev libpng-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev
 ```
-run the following if you plan on building openCV with GUI support
+run the following if you plan on building openCV with GUI support (This is what the other tutorial suggested, but I didn't and GUI support worked anyway)
 ```
 apt install libgtk-3-dev libcanberra-gtk3-dev
 ```
