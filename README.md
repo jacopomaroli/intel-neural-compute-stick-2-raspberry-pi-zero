@@ -222,7 +222,7 @@ We'll need to comment out the following two lines in the `/openvino_all/openvino
 Now you have 2 options. Long story short: If you compile it (like I did) leaving everything as it is now you'll get an error saying `opencv: undefined symbol: __atomic_fetch_add_8` both at compile time and at runtime https://github.com/piwheels/packages/issues/59 https://github.com/protocolbuffers/protobuf/commit/55ed1d427ccc0d200927746329ac9b811dee77b9.  
 
 There are two possible fixes
-1. (suboptimal) you enable turn `NGRAPH_UNIT_TEST_ENABLE=OFF` as I did later on and load your python executables by prefixing `LD_PRELOAD=/usr/lib/arm-linux-gnueabihf/libatomic.so.1`
+1. (suboptimal) you specify the flag `NGRAPH_UNIT_TEST_ENABLE=OFF` as I did later on and load your python executables by prefixing `LD_PRELOAD=/usr/lib/arm-linux-gnueabihf/libatomic.so.1`
 2. (better - untested) you can try the version of protobuf which fixes the problem. IDK if this approach will work so let me know.
 you'll need to change protobuf dependency from version 3.7.1 to version 3.12.2 here `ngraph/cmake/external_protobuf.cmake:47` https://github.com/openvinotoolkit/openvino/blob/master/ngraph/cmake/external_protobuf.cmake#L47 https://github.com/NervanaSystems/ngraph/blob/edc65ca0111f86a7e63a98f62cb17d153cc2535c/cmake/external_protobuf.cmake#L47  
 
