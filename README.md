@@ -5,9 +5,9 @@ Here I'm going to write down some notes to help people like me which are willing
 ## Why?
 1. Raspberry pi zero is cheap, small and still very well supported.
 2. It makes it very convenient adding vision to DIY robotics projects.
-3. It features onboard wifi and camera so you don't have to add more hardware to play with computer vision (if not a more powerful co-processor)
+3. It features onboard wifi and camera connector so you don't have to add more hardware to play with computer vision (if not a more powerful co-processor)
 
-## What's so difficoult about that? Why do I need this document anyway?
+## What's so difficult about that? Why do I need this document anyway?
 Well if you're here it means you must have hit a brickwall at a certain point so you might already have a clue.  
 Anyway the main reason is that, at the time this document has been redacted, Intel's official line is that only armv7 32 bit is officially supported (embedded architectures wise).  
 It means that Raspberry pi zero (being armv6 32-bit) is cut out.
