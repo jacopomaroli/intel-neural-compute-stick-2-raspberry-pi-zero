@@ -36,73 +36,21 @@ This part is mostly inspired by the following links:
 http://logan.tw/posts/2018/02/18/build-qemu-user-static-from-source-code/  
 https://mathiashueber.com/manually-update-qemu-on-ubuntu-18-04/  
 https://gist.github.com/julianxhokaxhiu/e7bc08c0702f7f13175f02eb68b8b447  
-It's going to be minimal and featuring only an arm interpreter. Very useful in case this evolves into a CI project.  
-For genaral purposes installation you might want to remove most of these flags.
+It's going to be minimal and featuring only an arm interpreter.  
+For genaral purposes installation you might want to remove the last flag and build all the platforms.
 ```
 wget https://download.qemu.org/qemu-4.1.0.tar.xz 
 tar xvJf qemu-4.1.0.tar.xz 
 cd qemu-4.1.0
 mkdir build && cd build
-# from https://gist.github.com/julianxhokaxhiu/e7bc08c0702f7f13175f02eb68b8b447
-# removed --disable-libssh2 and --enable-docs
 ../configure \
-    --disable-bsd-user  \
-    --disable-guest-agent  \
-    --disable-strip  \
-    --disable-werror  \
-    --disable-gcrypt  \
-    --disable-debug-info  \
-    --disable-debug-tcg  \
-    --disable-tcg-interpreter  \
-    --enable-attr  \
-    --disable-brlapi  \
-    --disable-linux-aio  \
-    --disable-bzip2  \
-    --disable-bluez  \
-    --disable-cap-ng  \
-    --disable-curl  \
-    --disable-fdt  \
-    --disable-glusterfs  \
-    --disable-gnutls  \
-    --disable-nettle  \
-    --disable-gtk  \
-    --disable-rdma  \
-    --disable-libiscsi  \
-    --disable-vnc-jpeg  \
-    --disable-kvm  \
-    --disable-lzo  \
-    --disable-curses  \
-    --disable-libnfs  \
-    --disable-numa  \
-    --disable-opengl  \
-    --disable-vnc-png  \
-    --disable-rbd  \
-    --disable-vnc-sasl  \
-    --disable-sdl  \
-    --disable-seccomp  \
-    --disable-smartcard  \
-    --disable-snappy  \
-    --disable-spice  \
-    --disable-libusb  \
-    --disable-usb-redir  \
-    --disable-vde  \
-    --disable-vhost-net  \
-    --disable-virglrenderer  \
-    --disable-virtfs  \
-    --disable-vnc  \
-    --disable-vte  \
-    --disable-xen  \
-    --disable-xen-pci-passthrough  \
-    --disable-xfsctl  \
-    --enable-linux-user  \
-    --disable-system  \
-    --disable-blobs  \
-    --disable-tools  \
-    --target-list=arm-linux-user  \
-    --static  \
-    --disable-pie
+    --static \
+    --disable-system \
+    --enable-linux-user \
+    --enable-attr \
+    --target-list=arm-linux-user
 make
-sudo checkinstall
+sudo checkinstall # you should specify at least the package name (I put qemu) and the version (4.1.0)
 ```
 ## 2. Building openCV
 Most of this comes from here https://solarianprogrammer.com/2019/08/07/cross-compile-opencv-raspberry-pi-zero-raspbian/  
@@ -119,7 +67,7 @@ Let's start by cloning the base env
 mkdir ~/raspbian
 sudo debootstrap --no-check-gpg --foreign --arch=armhf buster ~/raspbian http://archive.raspbian.org/raspbian
 ```
-If you now use cat -v or od -c you'll see the fingerprint of the executable we need to identify the architecture (this step is just to show the reasoning behind the next line)  
+If you now use `cat -v | head -n 10` or `od -c | head -n 10` you'll see the fingerprint of the executable we need to identify the architecture (this step is just to show the reasoning behind the next line)  
 ```
 0000000 177   E   L   F 001 001 001  \0  \0  \0  \0  \0  \0  \0  \0  \0
 0000020 002  \0   (  \0 001  \0  \0  \0   0   ; 001  \0   4  \0  \0  \0
@@ -130,26 +78,12 @@ If you now use cat -v or od -c you'll see the fingerprint of the executable we n
 We can now run:  
 ```
 /proc/sys/fs/binfmt_misc/
-sudo update-binfmts --install qemu-user-static /usr/local/bin/qemu-arm-static --magic '\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00' --mask '\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff'
+sudo update-binfmts --install qemu-arm-static /usr/local/bin/qemu-arm --magic '\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00' --mask '\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff'
 ```
-which will tell the kernel to use the interpreter found at the specified path `/usr/local/bin/qemu-arm-static` when the magic string is found.  
-
-some other commands you can use for troubleshooting are the following:  
+which will tell the kernel to use the interpreter found at the specified path `/usr/local/bin/qemu-arm` (**inside the chroot**) when the magic string is found.  
+now we need to do the following
 ```
-update-binfmts --remove qemu-arm /usr/local/bin/qemu-arm-static
-update-binfmts --remove qemu-user-static /usr/lib/binfmt-support/run-detectors
-update-binfmts --remove armhf /usr/lib/binfmt-support/run-detectors
-update-binfmts --display armhf
-update-binfmts --enable armhf
-update-binfmts --install qemu-arm /opt/qemu-user-static/bin/qemu-arm-static
-ls /proc/sys/fs/binfmt_misc/
-
-sudo su
-echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/opt/qemu-user-static/bin/qemu-arm-static:' > /proc/sys/fs/binfmt_misc/register
-exit
-```
-since we're using binfmt we're not going to need to copy the interpreter into the qemu /usr/bin folder
-```
+sudo cp /usr/local/bin/qemu-arm ~/raspbian/usr/local/bin/qemu-arm
 sudo chroot ~/raspbian /debootstrap/debootstrap --second-stage
 # from https://github.com/debian-pi/raspbian-ua-netinst/issues/314#issuecomment-159754610
 mkdir -p -m 755 ~/raspbian/dev/pts
@@ -161,12 +95,25 @@ sudo chroot ~/raspbian apt update
 sudo chroot ~/raspbian apt upgrade
 sudo chroot ~/raspbian
 ```
-I confess I had a few hiccups here so if the last line spits out an error, keep investigating what's broken with binfmts because I'm not sure what I did to make it work in the end. I kept getting 
+I confess I had a few hiccups during the above so if the last line spits out an error, keep investigating what's broken with binfmts. I kept getting 
 ```
-cannot run command '/bin/sh' No such file or directory.
+cannot run command '/bin/bash' No such file or directory.
 ```
-But it went away after I kept adding and removing interpreters. Although please let me know if the above procedure works fine.  
-Some useful commands:  
+But it went away after I kept fiddling with the interpreters. Although please let me know if the above procedure works fine.  
+
+here is a reference for some useful commands you can use **only in case you need troubleshooting**:  
+```
+update-binfmts --remove qemu-arm-static /usr/local/bin/qemu-arm
+update-binfmts --remove qemu-arm-static /usr/lib/binfmt-support/run-detectors
+update-binfmts --remove qemu-arm-static /usr/lib/binfmt-support/run-detectors
+update-binfmts --display
+update-binfmts --display qemu-arm-static
+update-binfmts --enable qemu-arm-static
+update-binfmts --install qemu-arm-static /usr/local/bin/qemu-arm
+ls /proc/sys/fs/binfmt_misc/
+echo ':qemu-arm-static:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/local/bin/qemu-arm:' | sudo tee /proc/sys/fs/binfmt_misc/register
+```
+Some other useful commands:  
 ```
 exit # get back to your host shell
 sudo chroot ~/raspbian # log into the qemu shell
